@@ -1,69 +1,71 @@
 import streamlit as st
 
-# تنظیمات اصلی صفحه
-st.set_page_config(page_title="Health Analyzer", page_icon="🏥")
+# تنظیمات ظاهر صفحه
+st.set_page_config(page_title="سیستم تحلیل هوشمند سلامت", layout="wide")
 
-# ظاهر سازی فارسی و استایل‌دهی
+# استایل‌دهی راست‌چین برای زبان فارسی
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap');
-    html, body, [class*="css"] { font-family: 'Vazirmatn', sans-serif; direction: rtl; text-align: right; }
-    .stNumberInput, .stSelectbox, .stTextInput { text-align: right; }
+    .reportview-container .main .block-container { direction: rtl; }
+    div.stButton > button { width: 100%; border-radius: 10px; height: 3em; background-color: #ff4b4b; color: white; }
+    h1, h2, h3 { text-align: right; font-family: 'Tahoma'; }
+    .stNumberInput, .stSelectbox { text-align: right; }
     </style>
     """, unsafe_import_allowed=True)
 
-st.title("🩺 سامانه تحلیل هوشمند آزمایش خون و ژنتیک")
-st.write("این برنامه بر اساس الگوریتم‌های پیش‌بینی، احتمال ابتلای شما به بیماری‌ها را تحلیل می‌کند.")
+st.title("🏥 سامانه پیش‌بینی و تحلیل وضعیت سلامت")
+st.write("لطفاً اطلاعات آزمایش خون و سوابق خانوادگی را وارد کنید تا تحلیل انجام شود.")
 
-# بخش ورودی اطلاعات
-with st.expander("👤 مشخصات فردی و سوابق خانوادگی", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        age = st.number_input("سن شما", 1, 100, 25)
-        gender = st.selectbox("جنسیت", ["مرد", "زن"])
-    with col2:
-        family_history = st.multiselect("سابقه بیماری در خانواده (درجه ۱ و ۲)", 
-                                        ["دیابت نوع ۲", "فشار خون بالا", "بیماری قلبی", "چربی خون"])
+# ایجاد ستون‌ها برای ظاهر بهتر
+col1, col2 = st.columns(2)
 
-with st.expander("🔬 نتایج آزمایش خون (مقادیر عددی)", expanded=True):
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        fbs = st.number_input("قند خون (FBS)", 50, 300, 95)
-    with c2:
-        ldl = st.number_input("کلسترول بد (LDL)", 50, 250, 110)
-    with c3:
-        hgb = st.number_input("هموگلوبین (Hb)", 5.0, 20.0, 13.0)
+with col1:
+    st.header("🔬 نتایج آزمایش خون")
+    glucose = st.number_input("قند خون ناشتا (mg/dL)", min_value=50, max_value=300, value=100)
+    cholesterol = st.number_input("کلسترول کل (mg/dL)", min_value=100, max_value=400, value=180)
+    hemoglobin = st.number_input("هموگلوبین (g/dL)", min_value=5.0, max_value=20.0, value=14.0, step=0.1)
 
-# دکمه پردازش
-if st.button("شروع تحلیل و پیش‌بینی"):
+with col2:
+    st.header("🧬 سوابق و اطلاعات فردی")
+    age = st.number_input("سن", min_value=1, max_value=120, value=30)
+    family_history = st.selectbox("سابقه بیماری ارثی در خانواده؟", ["ندارد", "دیابت", "بیماری قلبی", "کم‌خونی"])
+    gender = st.radio("جنسیت", ["مرد", "زن"])
+
+# دکمه تحلیل
+if st.button("شروع تحلیل هوشمند"):
     st.divider()
+    st.subheader("📋 نتیجه تحلیل و پیش‌بینی:")
     
-    # منطق تحلیل (Core Logic)
-    has_risk = False
-    
-    # ۱. تحلیل دیابت
-    if fbs >= 126 or "دیابت نوع ۲" in family_history:
-        st.error("🚨 هشدار دیابت:")
-        if fbs >= 126: st.write("- قند خون شما در محدوده دیابت است.")
-        if "دیابت نوع ۲" in family_history: st.write("- سابقه ارثی، ریسک ابتلا را در سنین بالاتر ۳ برابر می‌کند.")
-        has_risk = True
+    results = []
+    risks = []
 
-    # ۲. تحلیل بیماری قلبی
-    if ldl > 160 or "بیماری قلبی" in family_history:
-        st.warning("⚠️ بررسی سلامت قلب:")
-        if ldl > 160: st.write("- سطح LDL بالا است؛ خطر رسوب در عروق وجود دارد.")
-        if "بیماری قلبی" in family_history: st.write("- به دلیل سابقه خانوادگی، چک‌آپ سالانه قلب توصیه می‌شود.")
-        has_risk = True
+    # منطق تحلیل (Expert System Logic)
+    # تحلیل دیابت
+    if glucose > 126:
+        results.append("🔴 قند خون شما در محدوده دیابت است.")
+        if family_history == "دیابت":
+            risks.append("⚠️ ریسک ابتلای قطعی به دیابت به دلیل سابقه خانوادگی بسیار بالاست.")
+    elif 100 <= glucose <= 126:
+        results.append("🟡 شما در مرحله پیش‌دیابت هستید.")
 
-    # ۳. تحلیل کم‌خونی
-    if (gender == "مرد" and hgb < 13) or (gender == "زن" and hgb < 12):
-        st.info("ℹ️ تحلیل هموگلوبین:")
-        st.write("- سطح هموگلوبین پایین‌تر از حد نرمال است (احتمال کم‌خونی).")
-        has_risk = True
+    # تحلیل کلسترول
+    if cholesterol > 240:
+        results.append("🔴 سطح کلسترول بسیار بالاست.")
+        if family_history == "بیماری قلبی":
+            risks.append("⚠️ خطر سکته قلبی یا گرفتگی عروق در آینده وجود دارد.")
 
-    if not has_risk:
-        st.success("✅ تبریک! فاکتورهای شما در محدوده ایمن قرار دارد.")
+    # تحلیل کم‌خونی
+    if (gender == "مرد" and hemoglobin < 13.5) or (gender == "زن" and hemoglobin < 12):
+        results.append("🔴 شواهدی از کم‌خونی (Anemia) مشاهده شد.")
 
-st.sidebar.markdown("---")
-st.sidebar.info("این پروژه صرفاً جنبه تحقیقاتی دارد.")
+    # نمایش نتایج
+    if not results and not risks:
+        st.success("✅ طبق تحلیل اولیه، وضعیت فاکتورهای شما نرمال است.")
+    else:
+        for res in results:
+            st.info(res)
+        for risk in risks:
+            st.warning(risk)
+            
+    st.info("💡 توجه: این یک تحلیل آماری است و برای تشخیص نهایی حتماً باید به پزشک مراجعه کنید.")
 
