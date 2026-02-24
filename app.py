@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 
 # تنظیمات اصلی صفحه
@@ -68,3 +66,4 @@ if st.button("شروع تحلیل و پیش‌بینی"):
 
 st.sidebar.markdown("---")
 st.sidebar.info("این پروژه صرفاً جنبه تحقیقاتی دارد.")
+
